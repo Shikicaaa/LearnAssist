@@ -4,6 +4,7 @@ from alembic import context
 from app.modules.auth import (
     models as _auth_models,  # noqa: F401  (registruje tabele u Base.metadata)
 )
+from app.modules.sessions import models as _sessions_models  # noqa: F401
 from app.shared.config import get_settings
 from app.shared.db import Base
 

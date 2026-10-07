@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
 
+    embedding_model: str = "multilingual-e5-small"
+    max_sessions_per_user: int = 10
+
     rate_limit_auth_requests: int = 10
     rate_limit_auth_window_seconds: int = 60
 

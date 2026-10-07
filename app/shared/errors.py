@@ -32,6 +32,11 @@ class ConflictError(AppError):
     code = "conflict"
 
 
+class QuotaExceededError(AppError):
+    status_code = 429
+    code = "quota_exceeded"
+
+
 class RateLimitError(AppError):
     status_code = 429
     code = "rate_limited"
