@@ -1,0 +1,10 @@
+[importlinter]
+root_package = app
+
+[importlinter:contract:shared-is-a-base-layer]
+name = shared ne zavisi od modula
+type = forbidden
+source_modules =
+    app.shared
+forbidden_modules =
+    app.modules
