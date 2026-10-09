@@ -17,7 +17,13 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 7
 
+    celery_broker_url: str = "redis://localhost:6379/1"
+    celery_result_backend: str = "redis://localhost:6379/2"
+
     embedding_model: str = "multilingual-e5-small"
+    embedding_device: str = "cpu"
+    embedding_batch_size: int = 32
+    local_storage_path: str = "./data/files"
     max_sessions_per_user: int = 10
 
     rate_limit_auth_requests: int = 10

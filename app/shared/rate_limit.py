@@ -5,7 +5,6 @@ from app.shared.errors import RateLimitError
 
 
 def enforce_rate_limit(key: str) -> None:
-    """Fiksni prozor: INCR brojač pod ključem, prvi put postavi istek. Preko limita -> 429."""
     settings = get_settings()
     client = redis.Redis.from_url(settings.redis_url)
     window = settings.rate_limit_auth_window_seconds
