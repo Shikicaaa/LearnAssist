@@ -19,9 +19,10 @@ source_modules =
 forbidden_modules =
     app.modules.sessions
     app.modules.sources
+    app.modules.llm
 
 [importlinter:contract:sessions-below-sources]
-name = sessions does not depend on sources, jobs or embeddings
+name = sessions does not depend on sources, jobs, embeddings or llm
 type = forbidden
 source_modules =
     app.modules.sessions
@@ -29,6 +30,20 @@ forbidden_modules =
     app.modules.sources
     app.modules.jobs
     app.modules.embeddings
+    app.modules.llm
+
+[importlinter:contract:llm-is-self-contained]
+name = llm depends only on auth (public interface)
+type = forbidden
+source_modules =
+    app.modules.llm
+forbidden_modules =
+    app.modules.sessions
+    app.modules.sources
+    app.modules.jobs
+    app.modules.embeddings
+    app.modules.auth.*
+allow_indirect_imports = True
 
 [importlinter:contract:sessions-uses-public-apis-only]
 name = sessions imports only the public interface of other modules
@@ -45,6 +60,7 @@ type = forbidden
 source_modules =
     app.modules.sources
 forbidden_modules =
+    app.modules.llm
     app.modules.auth.*
     app.modules.sessions.*
     app.modules.jobs.*

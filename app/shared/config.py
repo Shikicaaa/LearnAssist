@@ -20,6 +20,12 @@ class Settings(BaseSettings):
     celery_broker_url: str = "redis://localhost:6379/1"
     celery_result_backend: str = "redis://localhost:6379/2"
 
+    llm_provider: str = "gemini"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-3.8-flash"
+    llm_timeout_seconds: float = 30
+    llm_test_requests_per_minute: int = 10
+
     embedding_model: str = "multilingual-e5-small"
     embedding_device: str = "cpu"
     embedding_batch_size: int = 32

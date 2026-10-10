@@ -27,6 +27,7 @@ dependencies = [
     "pypdf>=5",
     "python-docx>=1.1",
     "python-multipart>=0.0.9",
+    "google-genai>=2",
 ]
 
 [project.optional-dependencies]
@@ -61,5 +62,8 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]
-addopts = "-m 'not slow'"
-markers = ["slow: uses the real embedding model (downloaded from the internet); run with -m slow"]
+addopts = "-m 'not slow and not live'"
+markers = [
+    "slow: uses the real embedding model (downloaded from the internet); run with -m slow",
+    "live: calls a real external LLM API with the key from .env; run with -m live",
+]
