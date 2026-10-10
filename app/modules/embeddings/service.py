@@ -43,7 +43,8 @@ class E5Embedder:
         self._model = None
 
     def _load(self):
-        # Lazy loading: importing torch and the model takes seconds, but the API doesn't need them at startup.
+        # Lazy loading: importing torch and the model takes seconds, and the API doesn't need
+        # them at startup.
         if self._model is None:
             from sentence_transformers import SentenceTransformer
 

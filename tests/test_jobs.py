@@ -46,7 +46,7 @@ def test_transient_error_is_retried_until_success():
 def test_transient_error_gives_up_after_max_retries():
     result = run("test.always_transient")
     assert result.state == "FAILURE"
-    assert calls["transient"] == 6  # prvi pokušaj + 5 ponavljanja
+    assert calls["transient"] == 6  # first attempt + 5 retries
 
 
 def test_permanent_error_is_not_retried():

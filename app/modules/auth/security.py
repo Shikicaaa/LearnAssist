@@ -12,7 +12,8 @@ from app.shared.db import utcnow
 from app.shared.errors import UnauthorizedError
 
 _hasher = PasswordHasher()
-# Hash lažne lozinke: koristi se kad email ne postoji, da login traje isto kao za pravog korisnika.
+# Hash of a fake password: used when the email doesn't exist, so login takes as long as
+# it does for a real user.
 _DUMMY_HASH = _hasher.hash("lazna-lozinka-za-izjednacavanje-vremena")
 
 
@@ -61,5 +62,5 @@ def new_refresh_token() -> str:
 
 
 def hash_refresh_token(raw: str) -> str:
-    # SHA-256 je dovoljan jer je token nasumičan sa visokom entropijom (za razliku od lozinke).
+    # SHA-256 is enough because the token is random with high entropy (unlike a password).
     return hashlib.sha256(raw.encode()).hexdigest()

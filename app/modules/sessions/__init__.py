@@ -1,4 +1,4 @@
-"""Javni interfejs modula sessions: drugi moduli smeju da uvoze samo ovo."""
+"""Public interface of the sessions module: other modules may import only this."""
 
 from app.modules.sessions.api import get_owned_session, router
 from app.modules.sessions.schemas import SessionOut

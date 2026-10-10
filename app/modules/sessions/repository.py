@@ -11,7 +11,8 @@ class SessionRepository:
         self.db = db
 
     def lock_user_quota(self, user_id: uuid.UUID) -> None:
-        # Advisory lock traje do kraja transakcije i serijalizuje istovremena kreiranja korisnika.
+        # The advisory lock lasts until the end of the transaction and serializes concurrent
+        # session creation by the same user.
         self.db.execute(
             text("SELECT pg_advisory_xact_lock(hashtextextended(:key, 0))"),
             {"key": f"sessions:{user_id}"},

@@ -11,7 +11,7 @@ _dev_url = make_url(
 )
 _test_url = _dev_url.set(database="rag_test")
 
-# Mora pre uvoza app: engine se pravi pri uvozu i čita ove promenljive.
+# Must be set before importing app: the engine is created at import time and reads these.
 os.environ["DATABASE_URL"] = _test_url.render_as_string(hide_password=False)
 os.environ["REDIS_URL"] = "redis://localhost:6379/15"
 os.environ["RATE_LIMIT_AUTH_REQUESTS"] = "1000"

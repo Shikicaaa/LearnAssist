@@ -22,8 +22,10 @@ dependencies = [
     "argon2-cffi>=23.1",
     "pyjwt>=2.9",
     "email-validator>=2.2",
-    # torch se instalira ODVOJENO (CPU verzija, vidi README), inače pip povlači veliku CUDA verziju.
+    # torch is installed SEPARATELY (CPU build, see README), otherwise pip pulls the large CUDA build.
     "sentence-transformers>=3",
+    "pypdf>=5",
+    "python-docx>=1.1",
 ]
 
 [project.optional-dependencies]
@@ -34,6 +36,7 @@ dev = [
     "ruff>=0.8",
     "mypy>=1.14",
     "import-linter>=2",
+    "fpdf2>=2.8",
 ]
 
 [tool.setuptools.packages.find]
@@ -58,4 +61,4 @@ ignore_missing_imports = true
 asyncio_mode = "auto"
 testpaths = ["tests"]
 addopts = "-m 'not slow'"
-markers = ["slow: koristi pravi embedding model (preuzima se sa interneta); pokreni sa -m slow"]
+markers = ["slow: uses the real embedding model (downloaded from the internet); run with -m slow"]

@@ -2,7 +2,7 @@
 root_package = app
 
 [importlinter:contract:shared-is-a-base-layer]
-name = shared ne zavisi od modula
+name = shared does not depend on modules
 type = forbidden
 source_modules =
     app.shared
@@ -10,7 +10,7 @@ forbidden_modules =
     app.modules
 
 [importlinter:contract:auth-depends-on-nothing]
-name = auth ne zavisi od drugih modula
+name = auth does not depend on other modules
 type = forbidden
 source_modules =
     app.modules.auth
@@ -18,7 +18,7 @@ forbidden_modules =
     app.modules.sessions
 
 [importlinter:contract:sessions-uses-auth-public-api-only]
-name = sessions uvozi samo javni interfejs auth modula
+name = sessions imports only the public interface of auth
 type = forbidden
 source_modules =
     app.modules.sessions

@@ -21,7 +21,7 @@ def get_owned_session(
     user: UserOut = Depends(get_current_user),
     service: SessionService = Depends(get_session_service),
 ) -> SessionOut:
-    """Učitava sesiju samo ako pripada korisniku; inače 404 (ne 403)."""
+    """Loads the session only if it belongs to the user; otherwise 404 (not 403)."""
     return SessionOut.model_validate(service.get_owned(user.id, sid))
 
 

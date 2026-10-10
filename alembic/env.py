@@ -2,7 +2,7 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from app.modules.auth import (
-    models as _auth_models,  # noqa: F401  (registruje tabele u Base.metadata)
+    models as _auth_models,  # noqa: F401  (registers tables in Base.metadata)
 )
 from app.modules.sessions import models as _sessions_models  # noqa: F401
 from app.shared.config import get_settings

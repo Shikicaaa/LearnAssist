@@ -58,7 +58,7 @@ class SessionService:
 
 
 def bump_corpus_version(db: Session, session_id: uuid.UUID) -> int:
-    """Povećava corpus_version u transakciji pozivaoca (ne radi commit)."""
+    """Increments corpus_version inside the caller's transaction (does not commit)."""
     new_version = SessionRepository(db).increment_corpus_version(session_id)
     if new_version is None:
         raise NotFoundError("Session not found")
