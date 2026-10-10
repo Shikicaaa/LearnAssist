@@ -25,6 +25,12 @@ class Settings(BaseSettings):
     embedding_batch_size: int = 32
     local_storage_path: str = "./data/files"
     max_sessions_per_user: int = 10
+    max_sources_per_session: int = 20
+    max_file_size_mb: float = 25
+    max_pdf_pages: int = 500
+    max_text_input_chars: int = 200_000
+    chunk_size: int = 500
+    chunk_overlap: int = 50
 
     rate_limit_auth_requests: int = 10
     rate_limit_auth_window_seconds: int = 60

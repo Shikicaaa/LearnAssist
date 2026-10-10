@@ -9,24 +9,44 @@ source_modules =
 forbidden_modules =
     app.modules
 
-[importlinter:contract:auth-depends-on-nothing]
-name = auth does not depend on other modules
+[importlinter:contract:leaf-modules-depend-on-nothing]
+name = auth, jobs and embeddings do not depend on other modules
 type = forbidden
 source_modules =
     app.modules.auth
+    app.modules.jobs
+    app.modules.embeddings
 forbidden_modules =
     app.modules.sessions
+    app.modules.sources
 
-[importlinter:contract:sessions-uses-auth-public-api-only]
-name = sessions imports only the public interface of auth
+[importlinter:contract:sessions-below-sources]
+name = sessions does not depend on sources, jobs or embeddings
 type = forbidden
 source_modules =
     app.modules.sessions
 forbidden_modules =
-    app.modules.auth.api
-    app.modules.auth.models
-    app.modules.auth.repository
-    app.modules.auth.schemas
-    app.modules.auth.security
-    app.modules.auth.service
+    app.modules.sources
+    app.modules.jobs
+    app.modules.embeddings
+
+[importlinter:contract:sessions-uses-public-apis-only]
+name = sessions imports only the public interface of other modules
+type = forbidden
+source_modules =
+    app.modules.sessions
+forbidden_modules =
+    app.modules.auth.*
+allow_indirect_imports = True
+
+[importlinter:contract:sources-uses-public-apis-only]
+name = sources imports only the public interface of other modules
+type = forbidden
+source_modules =
+    app.modules.sources
+forbidden_modules =
+    app.modules.auth.*
+    app.modules.sessions.*
+    app.modules.jobs.*
+    app.modules.embeddings.*
 allow_indirect_imports = True

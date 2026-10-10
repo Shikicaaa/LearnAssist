@@ -26,6 +26,7 @@ dependencies = [
     "sentence-transformers>=3",
     "pypdf>=5",
     "python-docx>=1.1",
+    "python-multipart>=0.0.9",
 ]
 
 [project.optional-dependencies]
@@ -50,7 +51,7 @@ target-version = "py314"
 select = ["E", "F", "W", "I", "N", "UP", "B"]
 
 [tool.ruff.lint.flake8-bugbear]
-extend-immutable-calls = ["fastapi.Depends"]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.File"]
 
 [tool.mypy]
 python_version = "3.14"

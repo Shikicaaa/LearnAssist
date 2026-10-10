@@ -1,6 +1,8 @@
 from collections.abc import Callable
 from typing import Any
 
+from celery import current_task
+
 from app.modules.jobs.celery_app import celery_app
 
 
@@ -23,3 +25,14 @@ def task(name: str) -> Callable[..., Any]:
         retry_jitter=True,
         max_retries=5,
     )
+
+
+def is_last_attempt() -> bool:
+    """True when the running task has used up its retries, so the next failure is final.
+
+    Outside of a task (e.g. a direct call in a test) there is nothing to retry, so it is True.
+    """
+    if not current_task:
+        return True
+    running = current_task._get_current_object()
+    return running.request.retries >= running.max_retries

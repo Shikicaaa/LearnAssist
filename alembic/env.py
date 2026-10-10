@@ -1,10 +1,12 @@
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
-from app.modules.auth import (
-    models as _auth_models,  # noqa: F401  (registers tables in Base.metadata)
-)
+
+# These imports register every module's tables in Base.metadata. They look unused, but without
+# them Alembic would see an empty schema. Keep the noqa so linters don't remove them.
+from app.modules.auth import models as _auth_models  # noqa: F401
 from app.modules.sessions import models as _sessions_models  # noqa: F401
+from app.modules.sources import models as _sources_models  # noqa: F401
 from app.shared.config import get_settings
 from app.shared.db import Base
 

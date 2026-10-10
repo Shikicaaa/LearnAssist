@@ -1,4 +1,6 @@
+import logging
 import uuid
+from collections.abc import Callable
 
 from sqlalchemy.orm import Session
 
@@ -6,6 +8,18 @@ from app.modules.sessions.models import StudySession
 from app.modules.sessions.repository import SessionRepository
 from app.shared.config import get_settings
 from app.shared.errors import NotFoundError, QuotaExceededError
+
+logger = logging.getLogger(__name__)
+
+# A delete hook runs inside the delete transaction, before the session row disappears, and may
+# return a callback that is run only after the commit succeeded (e.g. removing files from disk).
+DeleteHook = Callable[[Session, uuid.UUID], Callable[[], None] | None]
+_delete_hooks: list[DeleteHook] = []
+
+
+def register_delete_hook(hook: DeleteHook) -> None:
+    if hook not in _delete_hooks:
+        _delete_hooks.append(hook)
 
 
 class SessionService:
@@ -53,8 +67,17 @@ class SessionService:
 
     def delete(self, user_id: uuid.UUID, session_id: uuid.UUID) -> None:
         self.get_owned(user_id, session_id)
+        after_commit = [hook(self.db, session_id) for hook in _delete_hooks]
         self.repo.delete(session_id, user_id)
         self.db.commit()
+        for action in after_commit:
+            if action is None:
+                continue
+            try:
+                action()
+            except Exception:
+                # The session is already gone; a failed cleanup must not turn that into an error.
+                logger.exception("Cleanup after session deletion failed")
 
 
 def bump_corpus_version(db: Session, session_id: uuid.UUID) -> int:
