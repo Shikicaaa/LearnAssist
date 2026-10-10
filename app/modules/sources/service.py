@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 from app.modules.jobs import TaskQueue
 from app.modules.sessions import bump_corpus_version
 from app.modules.sources.constants import INGEST_TASK, MIME_BY_FORMAT
+from app.modules.sources.events import publish_source_event
 from app.modules.sources.models import Source, SourceStatus, SourceType
 from app.modules.sources.parsers import SourceFormat, detect_format
 from app.modules.sources.repository import SourceRepository
@@ -183,6 +184,8 @@ class SourcesService:
             self.db.rollback()
             self._discard(saved)
             raise
+        for row in rows:
+            publish_source_event(row)
         self._enqueue(rows)
         return rows
 
@@ -193,10 +196,12 @@ class SourcesService:
                 self.queue.enqueue(INGEST_TASK, {"source_id": str(source.id)})
             except Exception:
                 logger.exception("Could not enqueue source %s", source.id)
-                self.repo.mark_failed(
+                failed = self.repo.mark_failed(
                     source.id, "Processing could not be scheduled. Try reindexing."
                 )
                 self.db.commit()
+                if failed:
+                    publish_source_event(failed)
             # The worker may already have changed the row (eager mode), so show the real state.
             self.db.refresh(source)
 
@@ -226,6 +231,7 @@ class SourcesService:
         source.status = SourceStatus.QUEUED.value
         source.error = None
         self.db.commit()
+        publish_source_event(source)
         self._enqueue([source])
         return source
 
@@ -240,6 +246,7 @@ class SourcesService:
         source.storage_key = None
         bump_corpus_version(self.db, source.session_id)
         self.db.commit()
+        publish_source_event(source)
         if key:
             self._discard([key])
 

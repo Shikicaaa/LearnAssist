@@ -8,6 +8,7 @@ from app.modules.jobs import PermanentError, TransientError, is_last_attempt, ta
 from app.modules.sessions import bump_corpus_version
 from app.modules.sources.chunker import chunk_document
 from app.modules.sources.constants import FORMAT_BY_MIME, INGEST_TASK
+from app.modules.sources.events import publish_source_event
 from app.modules.sources.models import Chunk, SourceStatus
 from app.modules.sources.parsers import ParseError, parse_document
 from app.modules.sources.repository import SourceRepository
@@ -55,6 +56,7 @@ def _ingest(source_id: uuid.UUID) -> None:
         source.status = SourceStatus.PROCESSING.value
         source.error = None
         db.commit()
+        publish_source_event(source)
         session_id, user_id = source.session_id, source.user_id
         storage_key, mime = source.storage_key, source.mime
 
@@ -101,9 +103,12 @@ def _ingest(source_id: uuid.UUID) -> None:
         source.status = SourceStatus.READY.value
         source.page_count = document.page_count
         db.commit()
+        publish_source_event(source)
 
 
 def _fail(source_id: str, message: str) -> None:
     with SessionLocal() as db:
-        SourceRepository(db).mark_failed(uuid.UUID(source_id), message)
+        source = SourceRepository(db).mark_failed(uuid.UUID(source_id), message)
         db.commit()
+        if source:
+            publish_source_event(source)

@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     embedding_batch_size: int = 32
     local_storage_path: str = "./data/files"
     max_sessions_per_user: int = 10
+    sse_heartbeat_seconds: float = 15
     max_sources_per_session: int = 20
     max_file_size_mb: float = 25
     max_pdf_pages: int = 500

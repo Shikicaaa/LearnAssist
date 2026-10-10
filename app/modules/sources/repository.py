@@ -1,6 +1,6 @@
 import uuid
 
-from sqlalchemy import delete, func, select, text, update
+from sqlalchemy import delete, func, select, text
 from sqlalchemy.orm import Session
 
 from app.modules.sources.models import Chunk, Source, SourceStatus
@@ -79,9 +79,11 @@ class SourceRepository:
         )
         return list(self.db.scalars(stmt))
 
-    def mark_failed(self, source_id: uuid.UUID, message: str) -> None:
-        self.db.execute(
-            update(Source)
-            .where(Source.id == source_id, Source.status != SourceStatus.DELETED)
-            .values(status=SourceStatus.FAILED, error=message)
-        )
+    def mark_failed(self, source_id: uuid.UUID, message: str) -> Source | None:
+        """Returns the updated source, or None if it is gone (the caller commits)."""
+        source = self.get_for_update(source_id)
+        if source is None or source.status == SourceStatus.DELETED:
+            return None
+        source.status = SourceStatus.FAILED.value
+        source.error = message
+        return source

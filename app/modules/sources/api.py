@@ -4,14 +4,17 @@ from typing import BinaryIO
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, File, Response, UploadFile
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.modules.auth import UserOut, get_current_user
 from app.modules.jobs import TaskQueue, get_task_queue
 from app.modules.sessions import SessionOut, get_owned_session
+from app.modules.sources.events import stream_events
 from app.modules.sources.schemas import SourceOut, TextSourceCreate
 from app.modules.sources.service import IncomingFile, SourcesService
+from app.shared.config import get_settings
 from app.shared.db import get_db
 from app.shared.storage import FileStorage, get_storage
 
@@ -59,6 +62,33 @@ def list_sources(
     service: SourcesService = Depends(get_sources_service),
 ):
     return service.list(user.id, session.id)
+
+
+@router.get("/sessions/{sid}/sources/events")
+async def source_events(
+    session: SessionOut = Depends(get_owned_session),
+    user: UserOut = Depends(get_current_user),
+    service: SourcesService = Depends(get_sources_service),
+):
+    """Server-sent events: a `snapshot` of all sources, then a `source` event on every change."""
+
+    def load_snapshot() -> list[dict]:
+        sources = service.list(user.id, session.id)
+        snapshot = [SourceOut.model_validate(s).model_dump(mode="json") for s in sources]
+        # This stream can last hours. Without this, the request's database session would keep
+        # its connection checked out for the whole time and exhaust the pool.
+        service.db.close()
+        return snapshot
+
+    async def snapshot() -> list[dict]:
+        return await run_in_threadpool(load_snapshot)
+
+    stream = stream_events(session.id, snapshot, get_settings().sse_heartbeat_seconds)
+    headers = {
+        "Cache-Control": "no-cache",
+        "X-Accel-Buffering": "no",  # tells nginx not to buffer the stream
+    }
+    return StreamingResponse(stream, media_type="text/event-stream", headers=headers)
 
 
 @router.get("/sources/{source_id}", response_model=SourceOut)
