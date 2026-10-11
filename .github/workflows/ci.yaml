@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: action/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.14"
           cache: pip
@@ -49,7 +49,7 @@ jobs:
       - name: Lint
         run: |
           ruff check .
-          ruff format --check
+          ruff format --check .
           mypy app
           lint-imports
         
@@ -61,9 +61,10 @@ jobs:
         run: |
           pytest
   frontend:
+    runs-on: ubuntu-latest
     defaults:
-    run:
-      working-directory: frontend
+      run:
+        working-directory: frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
