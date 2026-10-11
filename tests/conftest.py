@@ -10,8 +10,11 @@ import redis
 from dotenv import dotenv_values
 from sqlalchemy.engine import make_url
 
+# Locally the URL comes from .env; in CI there is no .env file, so fall back to the environment.
 _dev_url = make_url(
-    dotenv_values(".env")["DATABASE_URL"].replace("postgresql://", "postgresql+psycopg://", 1)
+    (dotenv_values(".env").get("DATABASE_URL") or os.environ["DATABASE_URL"]).replace(
+        "postgresql://", "postgresql+psycopg://", 1
+    )
 )
 _test_url = _dev_url.set(database="rag_test")
 STORAGE_DIR = Path(tempfile.mkdtemp(prefix="rag_test_files_"))

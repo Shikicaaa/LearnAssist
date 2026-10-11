@@ -105,7 +105,8 @@ def _split_oversized(
 ) -> list[_Unit]:
     """Splits a sentence longer than the limit by words, and a single huge word by characters."""
     pieces: list[_Unit] = []
-    group_start = group_end = None
+    group_start: int | None = None
+    group_end = 0
     group_tokens = 0
     for word in _WORD.finditer(text[start:end]):
         w_start, w_end = start + word.start(), start + word.end()
@@ -113,7 +114,7 @@ def _split_oversized(
         if w_tokens > limit:
             if group_start is not None:
                 pieces.append(_Unit(group_start, group_end, group_tokens))
-                group_start = group_end = None
+                group_start = None
                 group_tokens = 0
             pieces.extend(_split_long_word(text, w_start, w_end, count_tokens, limit))
             continue

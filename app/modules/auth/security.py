@@ -24,7 +24,7 @@ def hash_password(password: str) -> str:
 def verify_password(password_hash: str, password: str) -> bool:
     try:
         return _hasher.verify(password_hash, password)
-    except (VerifyMismatchError, InvalidHashError):
+    except VerifyMismatchError, InvalidHashError:
         return False
 
 
@@ -53,7 +53,7 @@ def decode_access_token(token: str) -> uuid.UUID:
             options={"require": ["exp", "sub"]},
         )
         return uuid.UUID(payload["sub"])
-    except (jwt.PyJWTError, ValueError):
+    except jwt.PyJWTError, ValueError:
         raise UnauthorizedError("Invalid or expired token") from None
 
 

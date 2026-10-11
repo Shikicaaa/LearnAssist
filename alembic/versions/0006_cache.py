@@ -4,6 +4,7 @@ Revision ID: 0006
 Revises: 0005
 Create Date: 2026-10-11
 """
+
 import sqlalchemy as sa
 from pgvector.sqlalchemy import Vector
 

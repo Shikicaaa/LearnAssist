@@ -58,7 +58,8 @@ class E5Embedder:
             normalize_embeddings=True,
             show_progress_bar=False,
         )
-        return vectors.tolist()
+        result: list[list[float]] = vectors.tolist()
+        return result
 
     def embed_passages(self, texts: list[str]) -> list[list[float]]:
         return self._encode([self._passage_prefix + t for t in texts])
@@ -72,6 +73,7 @@ class E5Embedder:
 
 class FakeEmbedder:
     """Fake embedder for testing: returns a deterministic vector based on the text hash."""
+
     def __init__(self, dim: int = 384, model_name: str = "multilingual-e5-small"):
         self.dim = dim
         self.model_name = model_name

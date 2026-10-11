@@ -4,6 +4,7 @@ import uuid
 from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import datetime
+from typing import TypedDict
 
 from sqlalchemy.orm import Session
 
@@ -30,6 +31,21 @@ from app.shared.config import get_settings
 from app.shared.db import utcnow
 
 logger = logging.getLogger(__name__)
+
+
+class _TurnBase(TypedDict):
+    """The _Turn fields known before retrieval; typed so `**base` is checked by mypy."""
+
+    user_id: uuid.UUID
+    session_id: uuid.UUID
+    question: str
+    asked_at: datetime
+    latin_only: bool
+    allow_general: bool
+    vector: list[float]
+    corpus_version: int
+    cacheable: bool
+    context: CacheContext
 
 
 @dataclass
@@ -133,7 +149,7 @@ class ChatService:
         cacheable = (
             use_cache and session.cache_enabled and not (history and depends_on_history(question))
         )
-        base = {
+        base: _TurnBase = {
             "user_id": user_id,
             "session_id": session.id,
             "question": question,

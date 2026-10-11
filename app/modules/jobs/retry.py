@@ -17,7 +17,7 @@ class PermanentError(Exception):
 def task(name: str) -> Callable[..., Any]:
     """Register a Celery task. Only TransientError triggers retries: up to 5 times, with
     exponential backoff (1s, 2s, 4s...) up to 5 minutes and random jitter."""
-    return celery_app.task(
+    decorator: Callable[..., Any] = celery_app.task(
         name=name,
         autoretry_for=(TransientError,),
         retry_backoff=True,
@@ -25,6 +25,7 @@ def task(name: str) -> Callable[..., Any]:
         retry_jitter=True,
         max_retries=5,
     )
+    return decorator
 
 
 def is_last_attempt() -> bool:
@@ -35,4 +36,4 @@ def is_last_attempt() -> bool:
     if not current_task:
         return True
     running = current_task._get_current_object()
-    return running.request.retries >= running.max_retries
+    return bool(running.request.retries >= running.max_retries)

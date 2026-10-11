@@ -68,4 +68,6 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    # Required fields (database_url, jwt_secret) are filled from the environment by
+    # pydantic-settings, which mypy cannot see.
+    return Settings()  # type: ignore[call-arg]
