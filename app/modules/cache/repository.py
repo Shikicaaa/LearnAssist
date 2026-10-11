@@ -1,6 +1,7 @@
 import uuid
+from typing import Any, cast
 
-from sqlalchemy import delete, select, update
+from sqlalchemy import CursorResult, delete, select, update
 from sqlalchemy.orm import Session
 
 from app.modules.cache.models import CacheEntry, CacheEntryCitation
@@ -114,9 +115,13 @@ class CacheRepository:
         )
 
     def delete_session(self, session_id: uuid.UUID, user_id: uuid.UUID) -> int:
-        result = self.db.execute(
-            delete(CacheEntry).where(
-                CacheEntry.session_id == session_id, CacheEntry.user_id == user_id
-            )
+        # DELETE yields a CursorResult (has rowcount); Session.execute is typed as plain Result.
+        result = cast(
+            "CursorResult[Any]",
+            self.db.execute(
+                delete(CacheEntry).where(
+                    CacheEntry.session_id == session_id, CacheEntry.user_id == user_id
+                )
+            ),
         )
         return result.rowcount

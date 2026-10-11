@@ -58,7 +58,8 @@ class E5Embedder:
             normalize_embeddings=True,
             show_progress_bar=False,
         )
-        return vectors.tolist()
+        result: list[list[float]] = vectors.tolist()
+        return result
 
     def embed_passages(self, texts: list[str]) -> list[list[float]]:
         return self._encode([self._passage_prefix + t for t in texts])

@@ -12,14 +12,14 @@ class TaskQueue(Protocol):
 class CeleryTaskQueue:
     def enqueue(self, name: str, payload: dict[str, Any]) -> str:
         # By name, not by import: the sender doesn't need to know where the task is defined.
-        return celery_app.send_task(name, kwargs=payload).id
+        return str(celery_app.send_task(name, kwargs=payload).id)
 
 
 class InlineTaskQueue:
     """Executes task immediately in the same process. For testing: without broker and workers."""
 
     def enqueue(self, name: str, payload: dict[str, Any]) -> str:
-        return celery_app.tasks[name].apply(kwargs=payload).id
+        return str(celery_app.tasks[name].apply(kwargs=payload).id)
 
 
 def get_task_queue() -> TaskQueue:

@@ -2,7 +2,7 @@ import hashlib
 import io
 import logging
 import uuid
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import BinaryIO
 
@@ -251,7 +251,8 @@ class SourcesService:
         if key:
             self._discard([key])
 
-    def _discard(self, keys: list[str]) -> None:
+    # Sequence, not list: inside this class `list` is the method defined above.
+    def _discard(self, keys: Sequence[str]) -> None:
         for key in keys:
             try:
                 self.storage.delete(key)
