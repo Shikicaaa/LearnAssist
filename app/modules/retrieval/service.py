@@ -54,6 +54,27 @@ def retrieve(
     )
 
 
+def best_score_since(
+    db: Session,
+    *,
+    embedding_model: str,
+    user_id: uuid.UUID,
+    session_id: uuid.UUID,
+    query_vector: list[float],
+    since_version: int,
+) -> float | None:
+    """How similar the closest chunk added after `since_version` is to the vector (None if no
+    chunk was added). The cache uses it to tell whether new material would change an answer."""
+    return sources.best_score_since(
+        db,
+        user_id=user_id,
+        session_id=session_id,
+        embedding_model=embedding_model,
+        query_vector=query_vector,
+        since_version=since_version,
+    )
+
+
 def get_chunk(db: Session, *, user_id: uuid.UUID, chunk_id: uuid.UUID) -> ChunkOut:
     detail = sources.get_chunk(db, user_id=user_id, chunk_id=chunk_id)
     return ChunkOut(

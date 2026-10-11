@@ -56,8 +56,10 @@ def ask(
         window_seconds=60,
     )
     if not stream:
-        return service.ask(user.id, session.id, body.question)
-    events = service.start_stream(user.id, session.id, body.question)
+        return service.ask(user.id, session, body.question, body.use_cache, body.allow_general)
+    events = service.start_stream(
+        user.id, session, body.question, body.use_cache, body.allow_general
+    )
     headers = {"Cache-Control": "no-cache", "X-Accel-Buffering": "no"}
     return StreamingResponse(_sse(events), media_type="text/event-stream", headers=headers)
 

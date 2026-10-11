@@ -291,6 +291,26 @@ def search_chunks(
     ]
 
 
+def best_score_since(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    session_id: uuid.UUID,
+    embedding_model: str,
+    query_vector: list[float],
+    since_version: int,
+) -> float | None:
+    """Best cosine similarity to `query_vector` among chunks added after `since_version`."""
+    score = SourceRepository(db).best_score_since(
+        session_id=session_id,
+        user_id=user_id,
+        embedding_model=embedding_model,
+        query_vector=query_vector,
+        since_version=since_version,
+    )
+    return None if score is None else float(score)
+
+
 def get_chunk(db: Session, *, user_id: uuid.UUID, chunk_id: uuid.UUID) -> ChunkDetail:
     row = SourceRepository(db).get_chunk(chunk_id, user_id)
     if row is None:

@@ -117,6 +117,31 @@ class SourceRepository:
         )
         return self.db.execute(stmt).all()
 
+    def best_score_since(
+        self,
+        *,
+        session_id: uuid.UUID,
+        user_id: uuid.UUID,
+        embedding_model: str,
+        query_vector: list[float],
+        since_version: int,
+    ) -> float | None:
+        """Highest similarity among the chunks added after `since_version`, or None if there are
+        none. Only that (small) slice of the session is scanned."""
+        stmt = (
+            select(func.max(1 - Chunk.embedding.cosine_distance(query_vector)))
+            .select_from(Chunk)
+            .join(Source, Source.id == Chunk.source_id)
+            .where(
+                Chunk.session_id == session_id,
+                Chunk.user_id == user_id,
+                Chunk.embedding_model == embedding_model,
+                Chunk.added_in_version > since_version,
+                Source.status == SourceStatus.READY,
+            )
+        )
+        return self.db.scalar(stmt)
+
     def get_chunk(self, chunk_id: uuid.UUID, user_id: uuid.UUID):
         stmt = (
             select(

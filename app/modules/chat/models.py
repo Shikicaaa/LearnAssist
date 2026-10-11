@@ -23,8 +23,10 @@ class Message(IdMixin, TimestampMixin, Base):
     role: Mapped[str] = mapped_column(String(10))
     content: Mapped[str] = mapped_column(Text)
     cached: Mapped[bool] = mapped_column(Boolean, default=False)
-    # Filled in by the cache (a later phase); there is no table to point a foreign key at yet.
-    cache_entry_id: Mapped[uuid.UUID | None] = mapped_column(default=None)
+    # SET NULL: clearing the cache must not touch the conversation.
+    cache_entry_id: Mapped[uuid.UUID | None] = mapped_column(
+        ForeignKey("cache_entries.id", ondelete="SET NULL"), default=None
+    )
     llm_provider: Mapped[str | None] = mapped_column(String(30), default=None)
     llm_model: Mapped[str | None] = mapped_column(String(100), default=None)
     prompt_version: Mapped[str | None] = mapped_column(String(30), default=None)
@@ -57,6 +59,4 @@ class MessageCitation(IdMixin, TimestampMixin, Base):
     snapshot_page: Mapped[int | None] = mapped_column(default=None)
     snapshot_page_end: Mapped[int | None] = mapped_column(default=None)
 
-    __table_args__ = (
-        UniqueConstraint("message_id", "rank", name="uq_message_citations_rank"),
-    )
+    __table_args__ = (UniqueConstraint("message_id", "rank", name="uq_message_citations_rank"),)

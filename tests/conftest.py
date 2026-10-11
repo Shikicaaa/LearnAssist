@@ -47,6 +47,9 @@ def database():
     _create_test_database()
     with engine.begin() as conn:
         conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    # create_all alone never alters a table that already exists, so a schema change (a new
+    # column or foreign key) would silently be missing from an old test database.
+    Base.metadata.drop_all(engine)
     Base.metadata.create_all(engine)
     yield
     engine.dispose()

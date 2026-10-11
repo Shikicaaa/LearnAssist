@@ -21,6 +21,7 @@ forbidden_modules =
     app.modules.sources
     app.modules.llm
     app.modules.retrieval
+    app.modules.cache
     app.modules.chat
 
 [importlinter:contract:sessions-below-the-rest]
@@ -34,6 +35,7 @@ forbidden_modules =
     app.modules.embeddings
     app.modules.llm
     app.modules.retrieval
+    app.modules.cache
     app.modules.chat
 
 [importlinter:contract:llm-is-self-contained]
@@ -47,18 +49,20 @@ forbidden_modules =
     app.modules.jobs
     app.modules.embeddings
     app.modules.retrieval
+    app.modules.cache
     app.modules.chat
     app.modules.auth.*
 allow_indirect_imports = True
 
 [importlinter:contract:sources-below-retrieval-and-chat]
-name = sources does not depend on llm, retrieval or chat; public APIs only
+name = sources does not depend on llm, retrieval, cache or chat; public APIs only
 type = forbidden
 source_modules =
     app.modules.sources
 forbidden_modules =
     app.modules.llm
     app.modules.retrieval
+    app.modules.cache
     app.modules.chat
     app.modules.auth.*
     app.modules.sessions.*
@@ -73,6 +77,7 @@ source_modules =
     app.modules.retrieval
 forbidden_modules =
     app.modules.chat
+    app.modules.cache
     app.modules.llm
     app.modules.jobs
     app.modules.sessions
@@ -93,7 +98,24 @@ forbidden_modules =
     app.modules.sessions.*
     app.modules.llm.*
     app.modules.retrieval.*
+    app.modules.cache.*
     app.modules.embeddings.*
+allow_indirect_imports = True
+
+[importlinter:contract:cache-sits-between-retrieval-and-chat]
+name = cache uses retrieval, sessions and auth through their public interfaces only
+type = forbidden
+source_modules =
+    app.modules.cache
+forbidden_modules =
+    app.modules.chat
+    app.modules.llm
+    app.modules.jobs
+    app.modules.sources
+    app.modules.retrieval.*
+    app.modules.embeddings.*
+    app.modules.sessions.*
+    app.modules.auth.*
 allow_indirect_imports = True
 
 [importlinter:contract:sessions-uses-public-apis-only]

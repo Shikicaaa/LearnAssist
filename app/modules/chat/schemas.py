@@ -9,6 +9,10 @@ Question = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1,
 
 class AskRequest(BaseModel):
     question: Question
+    # False forces a fresh answer and keeps this one out of the cache.
+    use_cache: bool = True
+    # True lets the model add clearly labelled general knowledge where the sources fall short.
+    allow_general: bool = False
 
 
 class CitationOut(BaseModel):

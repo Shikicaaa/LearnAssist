@@ -58,9 +58,9 @@ def filled(client, alice, sid):
     return sid
 
 
-def ask(client, headers, sid, question=QUESTION, stream=False):
+def ask(client, headers, sid, question=QUESTION, stream=False, **options):
     url = f"{API}/sessions/{sid}/messages" + ("?stream=true" if stream else "")
-    return client.post(url, json={"question": question}, headers=headers)
+    return client.post(url, json={"question": question, **options}, headers=headers)
 
 
 def message_rows(sid):
@@ -132,6 +132,40 @@ class TestAnswer:
         assert body["content"] == NO_ANSWER_MESSAGE and body["citations"] == []
         assert "NEMA_ODGOVORA" not in body["content"]
         assert body["llm_provider"] == "fake"  # the model was consulted and said it doesn't know
+
+    def test_strict_mode_is_the_default(self, client, alice, filled, llm):
+        ask(client, alice, filled)
+        assert llm.calls[0]["system"] == system_prompt(False)
+        assert "ISKLJUČIVO" in llm.calls[0]["system"]
+
+    def test_general_mode_uses_the_hybrid_prompt(self, client, alice, filled, llm):
+        body = ask(client, alice, filled, allow_general=True).json()
+        assert llm.calls[0]["system"] == system_prompt(True) != system_prompt(False)
+        assert "opšteg znanja" in llm.calls[0]["system"]
+        assert (
+            sql_one("SELECT prompt_version FROM messages WHERE role = 'assistant'")
+            == f"{PROMPT_VERSION}+general"
+        )
+        assert body["content"] == ANSWER
+
+    def test_general_mode_still_asks_the_model_when_no_chunk_is_relevant(
+        self, client, alice, filled, llm, monkeypatch
+    ):
+        monkeypatch.setattr(get_settings(), "retrieval_min_score", 0.99)
+        llm.reply = "U tvom materijalu nema ovoga, ali iz opšteg znanja: kvorum je ..."
+        strict = ask(client, alice, filled, "sta je kvorum", use_cache=False).json()
+        assert strict["content"] == NO_ANSWER_MESSAGE and llm.calls == []
+        hybrid = ask(
+            client, alice, filled, "sta je kvorum", use_cache=False, allow_general=True
+        ).json()
+        assert hybrid["content"] == llm.reply and len(llm.calls) == 1
+        assert hybrid["citations"] == []
+
+    def test_cached_answer_is_not_shared_between_modes(self, client, alice, filled, llm):
+        ask(client, alice, filled)
+        ask(client, alice, filled, allow_general=True)
+        assert len(llm.calls) == 2
+        assert ask(client, alice, filled, allow_general=True).json()["cached"] is True
 
     def test_session_without_sources_answers_without_calling_the_model(
         self, client, alice, sid, llm
@@ -230,9 +264,7 @@ class TestFailures:
         assert message_rows(filled) == []  # no orphan question
 
     @pytest.mark.parametrize("question", ["", "   ", "x" * 2001])
-    def test_invalid_questions_are_422_and_cost_nothing(
-        self, client, alice, filled, llm, question
-    ):
+    def test_invalid_questions_are_422_and_cost_nothing(self, client, alice, filled, llm, question):
         assert ask(client, alice, filled, question).status_code == 422
         assert llm.calls == []
 
@@ -242,9 +274,7 @@ class TestFailures:
         assert statuses == [200, 200, 429]
         assert ask(client, bob, new_session(client, bob, "Bob's")).status_code == 200
 
-    def test_no_database_connection_is_held_while_the_model_works(
-        self, client, alice, filled, llm
-    ):
+    def test_no_database_connection_is_held_while_the_model_works(self, client, alice, filled, llm):
         seen = []
         llm.on_call = lambda: seen.append(
             sql_one(
@@ -257,9 +287,7 @@ class TestFailures:
 
 
 class TestIsolation:
-    def test_another_users_material_never_reaches_the_model(
-        self, client, alice, bob, filled, llm
-    ):
+    def test_another_users_material_never_reaches_the_model(self, client, alice, bob, filled, llm):
         bobs = new_session(client, bob, "Bob's")
         secret = "photosynthesis secret formula of bob"
         add_text(client, bob, bobs, title="bobs notes", content=secret)
@@ -269,17 +297,13 @@ class TestIsolation:
         assert "secret formula" not in prompt and "bobs notes" not in prompt
         assert all(c["source_title"] in {"bio", "history", "math"} for c in body["citations"])
 
-    def test_the_same_content_in_another_session_is_not_mixed_in(
-        self, client, alice, filled, llm
-    ):
+    def test_the_same_content_in_another_session_is_not_mixed_in(self, client, alice, filled, llm):
         other = new_session(client, alice, "Other")
         add_text(client, alice, other, title="elsewhere", content=BIOLOGY + " extra")
         ask(client, alice, filled)
         assert "elsewhere" not in llm.calls[0]["messages"][-1].content
 
-    def test_every_route_hides_foreign_sessions_and_chunks(
-        self, client, alice, bob, filled, llm
-    ):
+    def test_every_route_hides_foreign_sessions_and_chunks(self, client, alice, bob, filled, llm):
         ask(client, alice, filled)
         [(chunk_id,)] = sql("SELECT id FROM chunks WHERE text = :t", t=BIOLOGY)
         base = f"{API}/sessions/{filled}/messages"
@@ -424,4 +448,3 @@ class TestStreaming:
         llm.reply = "Šta je đak [1]"
         raw = ask(client, alice, filled, stream=True).content.decode("utf-8")
         assert "Šta" in raw and "\\u0160" not in raw
-

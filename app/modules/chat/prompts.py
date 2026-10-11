@@ -19,9 +19,17 @@ NO_SOURCES_MESSAGE = (
 )
 
 
+def prompt_version(allow_general: bool) -> str:
+    """What gets stored with an answer and keys the cache: a hybrid answer is not a valid reply
+    to a question asked in strict mode, and the other way round."""
+    return f"{PROMPT_VERSION}+general" if allow_general else PROMPT_VERSION
+
+
 @lru_cache
-def system_prompt() -> str:
-    name = PROMPT_VERSION.replace("-", "_") + ".txt"
+def system_prompt(allow_general: bool = False) -> str:
+    """Strict mode answers only from the sources; hybrid (`allow_general`) may add clearly
+    labelled general knowledge."""
+    name = PROMPT_VERSION.replace("-", "_") + ("" if allow_general else "_strict") + ".txt"
     return (Path(__file__).parent / "prompts" / name).read_text(encoding="utf-8").strip()
 
 

@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     warm_up_embedder: bool = True
     retrieval_top_k: int = 5
     retrieval_min_score: float = 0.75
+    # Questions at least this similar count as the same question. E5 similarities are squeezed
+    # into a narrow band, so this must be calibrated on real question pairs (phase 7).
+    cache_similarity_threshold: float = 0.95
     chunk_size: int = 500
     chunk_overlap: int = 50
 
