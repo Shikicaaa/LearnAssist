@@ -22,12 +22,13 @@ os.environ["DATABASE_URL"] = _test_url.render_as_string(hide_password=False)
 os.environ["REDIS_URL"] = "redis://localhost:6379/15"
 os.environ["RATE_LIMIT_AUTH_REQUESTS"] = "1000"
 os.environ["LOCAL_STORAGE_PATH"] = str(STORAGE_DIR)
+os.environ["WARM_UP_EMBEDDER"] = "false"
 
 from fastapi.testclient import TestClient  # noqa: E402
 from sqlalchemy import text  # noqa: E402
 
 from app.main import app  # noqa: E402
-from app.modules.embeddings import FakeEmbedder  # noqa: E402
+from app.modules.embeddings import FakeEmbedder, get_embedder  # noqa: E402
 from app.modules.jobs import InlineTaskQueue, get_task_queue  # noqa: E402
 from app.modules.sources import tasks as source_tasks  # noqa: E402
 from app.shared.db import Base, engine  # noqa: E402
@@ -66,8 +67,10 @@ def fake_services(monkeypatch):
     embedder = FakeEmbedder()
     monkeypatch.setattr(source_tasks, "get_embedder", lambda: embedder)
     app.dependency_overrides[get_task_queue] = InlineTaskQueue
+    app.dependency_overrides[get_embedder] = lambda: embedder
     yield embedder
     app.dependency_overrides.pop(get_task_queue, None)
+    app.dependency_overrides.pop(get_embedder, None)
 
 
 @pytest.fixture

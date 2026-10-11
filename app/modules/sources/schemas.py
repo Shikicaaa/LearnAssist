@@ -19,6 +19,30 @@ class TextSourceCreate(BaseModel):
         return value
 
 
+class ChunkHit(BaseModel):
+    """A chunk found by similarity search, with the data a citation needs."""
+
+    chunk_id: uuid.UUID
+    source_id: uuid.UUID
+    source_title: str
+    chunk_index: int
+    page_start: int | None
+    page_end: int | None
+    text: str
+    score: float  # cosine similarity, 1.0 = identical direction
+
+
+class ChunkDetail(BaseModel):
+    chunk_id: uuid.UUID
+    source_id: uuid.UUID
+    session_id: uuid.UUID
+    source_title: str
+    chunk_index: int
+    page_start: int | None
+    page_end: int | None
+    text: str
+
+
 class SourceOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 

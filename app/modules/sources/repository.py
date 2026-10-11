@@ -79,6 +79,61 @@ class SourceRepository:
         )
         return list(self.db.scalars(stmt))
 
+    def search_chunks(
+        self,
+        *,
+        session_id: uuid.UUID,
+        user_id: uuid.UUID,
+        embedding_model: str,
+        query_vector: list[float],
+        limit: int,
+    ):
+        # The HNSW index is global, but we only want one session's chunks. Without iterative
+        # scanning it fetches ~40 nearest chunks of ALL users and only then applies our filter,
+        # which can leave a session with fewer (or zero) results than it should have.
+        # "strict_order" keeps scanning the index until `limit` matching rows are found.
+        self.db.execute(text("SET LOCAL hnsw.iterative_scan = 'strict_order'"))
+        distance = Chunk.embedding.cosine_distance(query_vector)
+        stmt = (
+            select(
+                Chunk.id,
+                Chunk.source_id,
+                Source.title,
+                Chunk.chunk_index,
+                Chunk.page_start,
+                Chunk.page_end,
+                Chunk.text,
+                (1 - distance).label("score"),
+            )
+            .join(Source, Source.id == Chunk.source_id)
+            .where(
+                Chunk.session_id == session_id,
+                Chunk.user_id == user_id,
+                Chunk.embedding_model == embedding_model,
+                Source.status == SourceStatus.READY,
+            )
+            .order_by(distance)
+            .limit(limit)
+        )
+        return self.db.execute(stmt).all()
+
+    def get_chunk(self, chunk_id: uuid.UUID, user_id: uuid.UUID):
+        stmt = (
+            select(
+                Chunk.id,
+                Chunk.source_id,
+                Chunk.session_id,
+                Source.title,
+                Chunk.chunk_index,
+                Chunk.page_start,
+                Chunk.page_end,
+                Chunk.text,
+            )
+            .join(Source, Source.id == Chunk.source_id)
+            .where(Chunk.id == chunk_id, Chunk.user_id == user_id)
+        )
+        return self.db.execute(stmt).first()
+
     def mark_failed(self, source_id: uuid.UUID, message: str) -> Source | None:
         """Returns the updated source, or None if it is gone (the caller commits)."""
         source = self.get_for_update(source_id)

@@ -3,6 +3,7 @@
 from app.modules.llm.api import router
 from app.modules.llm.service import (
     FakeLLM,
+    Finished,
     LLMEmptyResponseError,
     LLMError,
     LLMMessage,
@@ -10,12 +11,15 @@ from app.modules.llm.service import (
     LLMProvider,
     LLMRateLimitError,
     LLMResult,
+    LLMStreamEvent,
     LLMUnavailableError,
+    TextDelta,
     get_llm_provider,
 )
 
 __all__ = [
     "FakeLLM",
+    "Finished",
     "LLMEmptyResponseError",
     "LLMError",
     "LLMMessage",
@@ -23,7 +27,9 @@ __all__ = [
     "LLMProvider",
     "LLMRateLimitError",
     "LLMResult",
+    "LLMStreamEvent",
     "LLMUnavailableError",
+    "TextDelta",
     "get_llm_provider",
     "router",
 ]

@@ -20,9 +20,11 @@ forbidden_modules =
     app.modules.sessions
     app.modules.sources
     app.modules.llm
+    app.modules.retrieval
+    app.modules.chat
 
-[importlinter:contract:sessions-below-sources]
-name = sessions does not depend on sources, jobs, embeddings or llm
+[importlinter:contract:sessions-below-the-rest]
+name = sessions depends only on auth
 type = forbidden
 source_modules =
     app.modules.sessions
@@ -31,6 +33,8 @@ forbidden_modules =
     app.modules.jobs
     app.modules.embeddings
     app.modules.llm
+    app.modules.retrieval
+    app.modules.chat
 
 [importlinter:contract:llm-is-self-contained]
 name = llm depends only on auth (public interface)
@@ -42,27 +46,61 @@ forbidden_modules =
     app.modules.sources
     app.modules.jobs
     app.modules.embeddings
+    app.modules.retrieval
+    app.modules.chat
     app.modules.auth.*
 allow_indirect_imports = True
 
-[importlinter:contract:sessions-uses-public-apis-only]
-name = sessions imports only the public interface of other modules
-type = forbidden
-source_modules =
-    app.modules.sessions
-forbidden_modules =
-    app.modules.auth.*
-allow_indirect_imports = True
-
-[importlinter:contract:sources-uses-public-apis-only]
-name = sources imports only the public interface of other modules
+[importlinter:contract:sources-below-retrieval-and-chat]
+name = sources does not depend on llm, retrieval or chat; public APIs only
 type = forbidden
 source_modules =
     app.modules.sources
 forbidden_modules =
     app.modules.llm
+    app.modules.retrieval
+    app.modules.chat
     app.modules.auth.*
     app.modules.sessions.*
     app.modules.jobs.*
     app.modules.embeddings.*
+allow_indirect_imports = True
+
+[importlinter:contract:retrieval-reads-chunks-only-through-sources]
+name = retrieval uses embeddings and sources through their public interfaces
+type = forbidden
+source_modules =
+    app.modules.retrieval
+forbidden_modules =
+    app.modules.chat
+    app.modules.llm
+    app.modules.jobs
+    app.modules.sessions
+    app.modules.auth
+    app.modules.sources.*
+    app.modules.embeddings.*
+allow_indirect_imports = True
+
+[importlinter:contract:chat-reaches-chunks-only-through-retrieval]
+name = chat does not touch sources or jobs, and imports public interfaces only
+type = forbidden
+source_modules =
+    app.modules.chat
+forbidden_modules =
+    app.modules.sources
+    app.modules.jobs
+    app.modules.auth.*
+    app.modules.sessions.*
+    app.modules.llm.*
+    app.modules.retrieval.*
+    app.modules.embeddings.*
+allow_indirect_imports = True
+
+[importlinter:contract:sessions-uses-public-apis-only]
+name = sessions imports only the public interface of auth
+type = forbidden
+source_modules =
+    app.modules.sessions
+forbidden_modules =
+    app.modules.auth.*
 allow_indirect_imports = True

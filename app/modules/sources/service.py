@@ -16,6 +16,7 @@ from app.modules.sources.events import publish_source_event
 from app.modules.sources.models import Source, SourceStatus, SourceType
 from app.modules.sources.parsers import SourceFormat, detect_format
 from app.modules.sources.repository import SourceRepository
+from app.modules.sources.schemas import ChunkDetail, ChunkHit
 from app.shared.config import get_settings
 from app.shared.errors import (
     ConflictError,
@@ -256,6 +257,54 @@ class SourcesService:
                 self.storage.delete(key)
             except Exception:
                 logger.exception("Could not delete stored file %s", key)
+
+
+def search_chunks(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    session_id: uuid.UUID,
+    embedding_model: str,
+    query_vector: list[float],
+    limit: int,
+) -> list[ChunkHit]:
+    """Nearest chunks of one session, from sources that are `ready`, best match first."""
+    rows = SourceRepository(db).search_chunks(
+        session_id=session_id,
+        user_id=user_id,
+        embedding_model=embedding_model,
+        query_vector=query_vector,
+        limit=limit,
+    )
+    return [
+        ChunkHit(
+            chunk_id=r.id,
+            source_id=r.source_id,
+            source_title=r.title,
+            chunk_index=r.chunk_index,
+            page_start=r.page_start,
+            page_end=r.page_end,
+            text=r.text,
+            score=float(r.score),
+        )
+        for r in rows
+    ]
+
+
+def get_chunk(db: Session, *, user_id: uuid.UUID, chunk_id: uuid.UUID) -> ChunkDetail:
+    row = SourceRepository(db).get_chunk(chunk_id, user_id)
+    if row is None:
+        raise NotFoundError("Chunk not found")
+    return ChunkDetail(
+        chunk_id=row.id,
+        source_id=row.source_id,
+        session_id=row.session_id,
+        source_title=row.title,
+        chunk_index=row.chunk_index,
+        page_start=row.page_start,
+        page_end=row.page_end,
+        text=row.text,
+    )
 
 
 def collect_files_for_deletion(db: Session, session_id: uuid.UUID) -> Callable[[], None]:

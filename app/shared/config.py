@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     max_file_size_mb: float = 25
     max_pdf_pages: int = 500
     max_text_input_chars: int = 200_000
+    chat_requests_per_minute: int = 10
+    chat_history_messages: int = 6
+    chat_max_output_tokens: int = 2048
+    warm_up_embedder: bool = True
+    retrieval_top_k: int = 5
+    retrieval_min_score: float = 0.75
     chunk_size: int = 500
     chunk_overlap: int = 50
 

@@ -1,16 +1,20 @@
 import logging
+from collections.abc import Iterator
 
 import httpx
 from google import genai
 from google.genai import errors, types
 
 from app.modules.llm.service import (
+    Finished,
     LLMEmptyResponseError,
     LLMMessage,
     LLMNotConfiguredError,
     LLMRateLimitError,
     LLMResult,
+    LLMStreamEvent,
     LLMUnavailableError,
+    TextDelta,
 )
 
 logger = logging.getLogger(__name__)
@@ -41,13 +45,7 @@ class GeminiProvider:
         system: str | None = None,
         max_output_tokens: int | None = None,
     ) -> LLMResult:
-        contents = [
-            types.Content(role=_ROLES[m.role], parts=[types.Part(text=m.content)])
-            for m in messages
-        ]
-        config = types.GenerateContentConfig(
-            system_instruction=system, max_output_tokens=max_output_tokens
-        )
+        contents, config = self._request(messages, system, max_output_tokens)
         try:
             response = self._client.models.generate_content(
                 model=self.model, contents=contents, config=config
@@ -55,17 +53,62 @@ class GeminiProvider:
         except errors.APIError as exc:
             raise self._translate(exc) from exc
         except (httpx.TransportError, TimeoutError, ConnectionError) as exc:
-            logger.warning("Gemini request failed: %s", type(exc).__name__)
-            raise LLMUnavailableError(
-                "The AI provider could not be reached or took too long. Try again."
-            ) from exc
+            raise self._unreachable(exc) from exc
         return self._to_result(response)
+
+    def stream(
+        self,
+        messages: list[LLMMessage],
+        system: str | None = None,
+        max_output_tokens: int | None = None,
+    ) -> Iterator[LLMStreamEvent]:
+        contents, config = self._request(messages, system, max_output_tokens)
+        parts: list[str] = []
+        usage = None
+        last = None
+        try:
+            for chunk in self._client.models.generate_content_stream(
+                model=self.model, contents=contents, config=config
+            ):
+                last = chunk
+                usage = chunk.usage_metadata or usage
+                if chunk.text:
+                    parts.append(chunk.text)
+                    yield TextDelta(chunk.text)
+        except errors.APIError as exc:
+            raise self._translate(exc) from exc
+        except (httpx.TransportError, TimeoutError, ConnectionError) as exc:
+            raise self._unreachable(exc) from exc
+        if not parts:
+            reason = _why_empty(last) if last is not None else "no response"
+            raise LLMEmptyResponseError(f"The model returned no text ({reason}).")
+        yield Finished(self._result("".join(parts), usage))
+
+    def _request(
+        self, messages: list[LLMMessage], system: str | None, max_output_tokens: int | None
+    ) -> tuple[list[types.Content], types.GenerateContentConfig]:
+        contents = [
+            types.Content(role=_ROLES[m.role], parts=[types.Part(text=m.content)])
+            for m in messages
+        ]
+        config = types.GenerateContentConfig(
+            system_instruction=system, max_output_tokens=max_output_tokens
+        )
+        return contents, config
+
+    def _unreachable(self, exc: Exception) -> LLMUnavailableError:
+        logger.warning("Gemini request failed: %s", type(exc).__name__)
+        return LLMUnavailableError(
+            "The AI provider could not be reached or took too long. Try again."
+        )
 
     def _to_result(self, response: types.GenerateContentResponse) -> LLMResult:
         text = response.text
         if not text:
             raise LLMEmptyResponseError(f"The model returned no text ({_why_empty(response)}).")
-        usage = response.usage_metadata
+        return self._result(text, response.usage_metadata)
+
+    def _result(self, text: str, usage) -> LLMResult:
         return LLMResult(
             text=text,
             provider=self.name,

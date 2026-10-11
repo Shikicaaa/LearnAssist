@@ -1,3 +1,5 @@
+import re
+from collections.abc import Callable, Iterator
 from dataclasses import dataclass, field
 from functools import lru_cache
 from typing import Literal, Protocol
@@ -45,6 +47,21 @@ class LLMResult:
     tokens_out: int
 
 
+@dataclass(frozen=True)
+class TextDelta:
+    text: str
+
+
+@dataclass(frozen=True)
+class Finished:
+    """Last event of a stream: the complete text plus token usage."""
+
+    result: LLMResult
+
+
+LLMStreamEvent = TextDelta | Finished
+
+
 class LLMProvider(Protocol):
     name: str
     model: str
@@ -56,6 +73,15 @@ class LLMProvider(Protocol):
         max_output_tokens: int | None = None,
     ) -> LLMResult: ...
 
+    def stream(
+        self,
+        messages: list[LLMMessage],
+        system: str | None = None,
+        max_output_tokens: int | None = None,
+    ) -> Iterator[LLMStreamEvent]:
+        """Yields TextDelta pieces as they arrive, then exactly one Finished."""
+        ...
+
 
 @dataclass
 class FakeLLM:
@@ -63,6 +89,8 @@ class FakeLLM:
 
     reply: str = "Zdravo! Kako mogu da pomognem?"
     error: Exception | None = None
+    stream_error_after: int | None = None  # raise `error` after this many deltas (mid-stream)
+    on_call: Callable[[], None] | None = None  # runs while the "model" is working
     name: str = "fake"
     model: str = "fake-model"
     calls: list[dict] = field(default_factory=list)
@@ -76,8 +104,32 @@ class FakeLLM:
         self.calls.append(
             {"messages": messages, "system": system, "max_output_tokens": max_output_tokens}
         )
+        if self.on_call:
+            self.on_call()
         if self.error:
             raise self.error
+        return self._result()
+
+    def stream(
+        self,
+        messages: list[LLMMessage],
+        system: str | None = None,
+        max_output_tokens: int | None = None,
+    ) -> Iterator[LLMStreamEvent]:
+        self.calls.append(
+            {"messages": messages, "system": system, "max_output_tokens": max_output_tokens}
+        )
+        if self.on_call:
+            self.on_call()
+        if self.error and self.stream_error_after is None:
+            raise self.error
+        for index, piece in enumerate(re.findall(r"\S+\s*", self.reply)):
+            if self.error and self.stream_error_after == index:
+                raise self.error
+            yield TextDelta(piece)
+        yield Finished(self._result())
+
+    def _result(self) -> LLMResult:
         return LLMResult(self.reply, self.name, self.model, tokens_in=7, tokens_out=11)
 
 

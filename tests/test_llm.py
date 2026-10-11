@@ -5,11 +5,13 @@ from google.genai import errors, types
 from app.main import app
 from app.modules.llm import (
     FakeLLM,
+    Finished,
     LLMEmptyResponseError,
     LLMMessage,
     LLMNotConfiguredError,
     LLMRateLimitError,
     LLMUnavailableError,
+    TextDelta,
     get_llm_provider,
 )
 from app.modules.llm.gemini import GeminiProvider
@@ -95,8 +97,18 @@ class TestTestEndpoint:
 
 
 class FakeModels:
-    def __init__(self, response=None, error=None):
+    def __init__(self, response=None, error=None, chunks=None, error_after=None):
         self.response, self.error, self.calls = response, error, []
+        self.chunks, self.error_after = chunks or [], error_after
+
+    def generate_content_stream(self, model, contents, config):
+        self.calls.append({"model": model, "contents": contents, "config": config})
+        if self.error and self.error_after is None:
+            raise self.error
+        for index, chunk in enumerate(self.chunks):
+            if self.error and index == self.error_after:
+                raise self.error
+            yield chunk
 
     def generate_content(self, model, contents, config):
         self.calls.append({"model": model, "contents": contents, "config": config})
@@ -106,8 +118,8 @@ class FakeModels:
 
 
 class FakeClient:
-    def __init__(self, response=None, error=None):
-        self.models = FakeModels(response, error)
+    def __init__(self, response=None, error=None, chunks=None, error_after=None):
+        self.models = FakeModels(response, error, chunks, error_after)
 
 
 def reply(text="Zdravo!", prompt=5, out=3, thoughts=0, finish=types.FinishReason.STOP):
@@ -123,9 +135,22 @@ def reply(text="Zdravo!", prompt=5, out=3, thoughts=0, finish=types.FinishReason
     )
 
 
-def provider(response=None, error=None):
-    client = FakeClient(response, error)
+def provider(response=None, error=None, chunks=None, error_after=None):
+    client = FakeClient(response, error, chunks, error_after)
     return GeminiProvider(client, "gemini-test"), client.models
+
+
+def piece(text, usage=None):
+    response = types.GenerateContentResponse(
+        candidates=[
+            types.Candidate(content=types.Content(role="model", parts=[types.Part(text=text)]))
+        ]
+    )
+    if usage:
+        response.usage_metadata = types.GenerateContentResponseUsageMetadata(
+            prompt_token_count=usage[0], candidates_token_count=usage[1], thoughts_token_count=0
+        )
+    return response
 
 
 def api_error(cls, code, message="boom", status="STATUS"):
@@ -212,6 +237,62 @@ class TestGeminiProvider:
         p, _ = provider(error=api_error(errors.ClientError, 404, "not found"))
         with pytest.raises(LLMNotConfiguredError, match="GEMINI_MODEL"):
             p.generate([LLMMessage("user", "cao")])
+
+
+class TestGeminiStreaming:
+    def test_yields_deltas_then_one_finished_with_usage(self):
+        p, models = provider(chunks=[piece("Zdra"), piece("vo, "), piece("svete!", usage=(5, 3))])
+        events = list(p.stream([LLMMessage("user", "cao")], system="Budi kratak."))
+        assert [e.text for e in events[:-1]] == ["Zdra", "vo, ", "svete!"]
+        assert all(isinstance(e, TextDelta) for e in events[:-1])
+        finished = events[-1]
+        assert isinstance(finished, Finished)
+        assert (finished.result.text, finished.result.tokens_in, finished.result.tokens_out) == (
+            "Zdravo, svete!",
+            5,
+            3,
+        )
+        assert models.calls[0]["config"].system_instruction == "Budi kratak."
+
+    def test_empty_stream_is_an_error(self):
+        p, _ = provider(chunks=[])
+        with pytest.raises(LLMEmptyResponseError):
+            list(p.stream([LLMMessage("user", "cao")]))
+
+    def test_failure_before_the_first_piece_is_translated(self):
+        p, _ = provider(error=api_error(errors.ClientError, 429, "quota"))
+        with pytest.raises(LLMRateLimitError):
+            next(p.stream([LLMMessage("user", "cao")]))
+
+    def test_failure_in_the_middle_is_translated(self):
+        error = api_error(errors.ServerError, 503, "overloaded")
+        p, _ = provider(chunks=[piece("a"), piece("b")], error=error, error_after=1)
+        stream = p.stream([LLMMessage("user", "cao")])
+        assert next(stream) == TextDelta("a")
+        with pytest.raises(LLMUnavailableError):
+            next(stream)
+
+    def test_network_errors_are_translated(self):
+        p, _ = provider(error=httpx.ReadTimeout("slow"))
+        with pytest.raises(LLMUnavailableError):
+            next(p.stream([LLMMessage("user", "cao")]))
+
+
+class TestFakeLLMStreaming:
+    def test_deltas_add_up_to_the_reply(self):
+        fake = FakeLLM(reply="Prvi drugi treci")
+        events = list(fake.stream([LLMMessage("user", "x")]))
+        assert "".join(e.text for e in events[:-1]) == "Prvi drugi treci"
+        assert isinstance(events[-1], Finished) and events[-1].result.text == "Prvi drugi treci"
+
+    def test_error_before_first_delta_and_in_the_middle(self):
+        boom = LLMUnavailableError("down")
+        with pytest.raises(LLMUnavailableError):
+            next(FakeLLM(error=boom).stream([]))
+        mid = FakeLLM(reply="a b c", error=boom, stream_error_after=1).stream([])
+        assert next(mid) == TextDelta("a ")
+        with pytest.raises(LLMUnavailableError):
+            next(mid)
 
 
 class TestFactory:

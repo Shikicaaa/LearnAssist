@@ -44,6 +44,9 @@ dev = [
 [tool.setuptools.packages.find]
 include = ["app*"]
 
+[tool.setuptools.package-data]
+"app.modules.chat" = ["prompts/*.txt"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py314"
