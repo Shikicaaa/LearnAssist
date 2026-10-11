@@ -72,6 +72,7 @@ class E5Embedder:
 
 class FakeEmbedder:
     """Fake embedder for testing: returns a deterministic vector based on the text hash."""
+
     def __init__(self, dim: int = 384, model_name: str = "multilingual-e5-small"):
         self.dim = dim
         self.model_name = model_name

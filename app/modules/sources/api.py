@@ -120,7 +120,7 @@ def download_original(
         media_type += "; charset=utf-8"
     headers = {
         # "attachment" makes browsers download instead of rendering uploaded content in our origin.
-        "Content-Disposition": f"attachment; filename=\"{ascii_name}\"; "
+        "Content-Disposition": f'attachment; filename="{ascii_name}"; '
         f"filename*=UTF-8''{quote(filename)}",
         "Content-Length": str(source.size_bytes),
         "X-Content-Type-Options": "nosniff",

@@ -219,7 +219,7 @@ class SourcesService:
         source = self.get(user_id, source_id)
         try:
             return source, self.storage.open(source.storage_key or "")
-        except (FileNotFoundError, ValueError):
+        except FileNotFoundError, ValueError:
             raise NotFoundError("The original file is no longer available") from None
 
     def reindex(self, user_id: uuid.UUID, source_id: uuid.UUID) -> Source:

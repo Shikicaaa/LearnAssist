@@ -88,8 +88,7 @@ class GeminiProvider:
         self, messages: list[LLMMessage], system: str | None, max_output_tokens: int | None
     ) -> tuple[list[types.Content], types.GenerateContentConfig]:
         contents = [
-            types.Content(role=_ROLES[m.role], parts=[types.Part(text=m.content)])
-            for m in messages
+            types.Content(role=_ROLES[m.role], parts=[types.Part(text=m.content)]) for m in messages
         ]
         config = types.GenerateContentConfig(
             system_instruction=system, max_output_tokens=max_output_tokens

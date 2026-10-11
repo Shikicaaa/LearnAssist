@@ -19,9 +19,7 @@ def require_development() -> None:
         raise NotFoundError("Not found")
 
 
-@router.post(
-    "/test", response_model=LLMTestResponse, dependencies=[Depends(require_development)]
-)
+@router.post("/test", response_model=LLMTestResponse, dependencies=[Depends(require_development)])
 def test_llm(
     body: LLMTestRequest,
     user: UserOut = Depends(get_current_user),
