@@ -3,7 +3,7 @@ FROM python:3.14-slim
 WORKDIR /srv
 ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 
-COPY pyproject.toml README.md ./
+COPY pyproject.toml ./
 COPY app ./app
 RUN pip install --no-cache-dir .
 

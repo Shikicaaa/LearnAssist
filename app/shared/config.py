@@ -22,7 +22,7 @@ class Settings(BaseSettings):
 
     llm_provider: str = "gemini"
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-3.8-flash"
+    gemini_model: str = "gemini-3.5-flash-lite"
     llm_timeout_seconds: float = 30
     llm_test_requests_per_minute: int = 10
 
