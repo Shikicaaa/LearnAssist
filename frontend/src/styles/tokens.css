@@ -1,0 +1,86 @@
+/* The --c-* names are palette roles, not colour names: each theme fills them with its own colours.
+     deep-teal  the dark panel colour (cards, hero blocks); cream is the ink on top of it
+     teal       the secondary glow / border colour
+     pink       the accent (buttons, citations)
+     plum       the warm mid tone (user bubble, avatars, selection)
+     cream      light ink, the same in both themes */
+
+/* Night: midnight. The old teal, pushed toward black-navy. */
+:root {
+  color-scheme: dark;
+
+  --c-deep-teal: #04323f;
+  --c-teal: #00626b;
+  --c-cream: #ebccb0;
+  --c-pink: #bd75a1;
+  --c-plum: #5f4262;
+
+  --bg: #030c14;
+  --bg-side: #02080e;
+  --surface: #06161f;
+  --surface-2: #0a2230;
+  --border: #12303f;
+  --border-soft: #0a2230;
+
+  --text: var(--c-cream);
+  --text-dim: color-mix(in srgb, var(--text) 66%, var(--bg));
+  --text-faint: color-mix(in srgb, var(--text) 42%, var(--bg));
+
+  --accent: var(--c-pink);
+  --accent-ink: #26121f; /* text on top of the accent */
+  --user-bubble: color-mix(in srgb, var(--c-plum) 55%, var(--bg));
+
+  --ok: #6fc7a8;
+  --warn: var(--c-cream);
+  --danger: #e58a8a;
+
+  --scene-bg: #02080e;
+  --scene-screen: #06161f;
+
+  /* hard offset shadow: the "sticker" look that makes things feel lofi */
+  --pop: 3px 3px 0 color-mix(in srgb, var(--c-deep-teal) 70%, #000);
+  --pop-accent: 3px 3px 0 var(--c-plum);
+
+  --radius: 14px;
+  --radius-sm: 9px;
+
+  --font-body: 'Nunito', system-ui, sans-serif;
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-mono: 'Space Mono', ui-monospace, monospace;
+
+  --sidebar-w: 280px;
+  --sources-w: 340px;
+}
+
+/* Day: warm paper with maroon ink, red accent, forest green and a light brown. */
+:root[data-theme='light'] {
+  color-scheme: light;
+
+  --c-deep-teal: #104f3e; /* forest green */
+  --c-teal: #2b7d65;
+  --c-cream: #f7ebd8;
+  --c-pink: #bd2123; /* red */
+  --c-plum: #a56c48; /* the brown, a step lighter than #875638 */
+
+  --bg: #f5e8d3;
+  --bg-side: #ecdbc0;
+  --surface: #fcf3e3;
+  --surface-2: #efdcc0;
+  --border: #d3b28c;
+  --border-soft: #e4cdac;
+
+  --text: #581e15; /* maroon */
+  --accent-ink: #fdf1de;
+  --user-bubble: color-mix(in srgb, var(--c-plum) 24%, var(--bg));
+
+  --ok: #104f3e;
+  --warn: #875638;
+  --danger: #bd2123;
+
+  /* the hero illustration is a night window in both themes: cream line art needs a dark ground */
+  --scene-bg: #2b120d;
+  --scene-screen: #3b1b13;
+
+  --pop: 3px 3px 0 color-mix(in srgb, #581e15 55%, var(--bg));
+  --pop-accent: 3px 3px 0 var(--c-plum);
+}
