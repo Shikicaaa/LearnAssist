@@ -1,6 +1,7 @@
 from sqlalchemy import engine_from_config, pool
 
 from alembic import context
+from app.modules.artifacts import models as _artifacts_models  # noqa: F401
 
 # These imports register every module's tables in Base.metadata. They look unused, but without
 # them Alembic would see an empty schema. Keep the noqa so linters don't remove them.

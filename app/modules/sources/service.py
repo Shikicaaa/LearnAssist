@@ -2,6 +2,7 @@ import hashlib
 import io
 import logging
 import uuid
+from collections import defaultdict
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import BinaryIO
@@ -341,3 +342,50 @@ def collect_files_for_deletion(db: Session, session_id: uuid.UUID) -> Callable[[
                 logger.exception("Could not delete stored file %s", key)
 
     return cleanup
+
+
+def sample_chunks(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    session_id: uuid.UUID,
+    embedding_model: str,
+    source_ids: list[uuid.UUID],
+    limit: int,
+) -> list[ChunkHit]:
+    repo = SourceRepository(db)
+    refs = repo.list_chunk_refs(
+        session_id=session_id,
+        user_id=user_id,
+        embedding_model=embedding_model,
+        source_ids=source_ids,
+    )
+    by_source = defaultdict(list)
+
+    for ref in refs:
+        by_source[ref.source_id].append(ref)
+
+    quota = max(1, limit // max(1, len(by_source)))
+    picked = []
+
+    for chunks in by_source.values():
+        step = len(chunks) / min(quota, len(chunks))
+        picked += [chunks[int(i * step)] for i in range(min(quota, len(chunks)))]
+
+    picked_ids = [r.id for r in picked[:limit]]
+
+    rows = repo.get_chunks_by_ids(session_id=session_id, user_id=user_id, chunk_ids=picked_ids)
+
+    return [
+        ChunkHit(
+            chunk_id=r.id,
+            source_id=r.source_id,
+            source_title=r.title,
+            chunk_index=r.chunk_index,
+            page_start=r.page_start,
+            page_end=r.page_end,
+            text=r.text,
+            score=1.0,
+        )
+        for r in rows
+    ]

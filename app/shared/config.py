@@ -48,6 +48,13 @@ class Settings(BaseSettings):
     chunk_size: int = 500
     chunk_overlap: int = 50
 
+    # Quiz numbers
+    quiz_max_questions: int = 25
+    quiz_context_chunks: int = 12
+    quiz_min_score: float = 0.55
+    quiz_requests_per_hour: int = 5
+    quiz_max_per_session: int = 2
+
     rate_limit_auth_requests: int = 10
     rate_limit_auth_window_seconds: int = 60
 
