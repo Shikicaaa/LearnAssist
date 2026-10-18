@@ -2,17 +2,10 @@ import hashlib
 import json
 import unicodedata
 import uuid
-from itertools import Iterable
+from collections.abc import Iterable
 
-_DIACRITICS = str.maketrans(
-    {
-        "č": "c",
-        "ć": "c",
-        "š": "s",
-        "ž": "z",
-        "đ": "dj"
-    }
-)
+_SPECIAL = str.maketrans({"đ": "dj", "ł": "l", "ø": "o", "æ": "ae", "œ": "oe"})
+
 
 def normalize_topic(topic: str) -> str:
     """
@@ -20,12 +13,13 @@ def normalize_topic(topic: str) -> str:
     case folding, and removing extra whitespace and punctuation.
     This is used to ensure that topics are compared in a consistent manner, regardless of formatting
     or case differences.
-    For example, "Hello World!" and "hello world" would be considered the same topic.
+    For example, "Ćao ljudi!" and "cao ljudi" would be considered the same topic.
     """
 
-    normalized = unicodedata.normalize("NFKC", topic).casefold().translate(_DIACRITICS)
-    spaceless = " ".join(normalized.split())
-    return spaceless.strip(" ?!.,:;\"'")
+    text = unicodedata.normalize("NFKD", topic).casefold()
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = text.translate(_SPECIAL)
+    return " ".join(text.split()).strip(" ?!.,;:\"'")
 
 
 def params_hash(
@@ -44,11 +38,11 @@ def params_hash(
     """
     payload = {
         "kind": "quiz",
-        "topic": normalize_topic(topic) or None,
+        "topic": (normalize_topic(topic) if topic else "") or None,
         "source_ids": sorted({str(s) for s in source_ids}),
         "num_questions": num_questions,
         "difficulty": difficulty,
-        "types": sorted(types),
+        "types": sorted(set(types)),
         "script": script,
         "variant": variant,
     }
