@@ -28,7 +28,7 @@ def alembic(*args: str) -> subprocess.CompletedProcess:
 
 @pytest.fixture
 def empty_database():
-    admin = _dev_url.set(database="postgres", drivername="postgresql+psycopg")
+    admin = _dev_url.set(database="postgres", drivername="postgresql")
     admin = admin.render_as_string(hide_password=False)
     with psycopg.connect(admin, autocommit=True) as conn:
         conn.execute(f"DROP DATABASE IF EXISTS {DB_NAME} WITH (FORCE)")
