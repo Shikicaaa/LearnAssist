@@ -80,3 +80,65 @@ export interface Chunk {
   page_end: number | null
   text: string
 }
+
+// ---- quizzes (app/modules/artifacts/schemas.py) -----------------------------------------
+
+export type QuestionType = 'mcq' | 'true_false' | 'short_answer'
+export type Difficulty = 'easy' | 'medium' | 'hard'
+export type QuizScript = 'latin' | 'cyrillic'
+export type ArtifactStatus = 'pending' | 'ready' | 'failed'
+
+export interface QuizRequest {
+  /** Narrows the material to what matches this text; null/omitted = the whole material. */
+  topic?: string | null
+  /** Empty/omitted = all sources. */
+  source_ids?: string[]
+  num_questions?: number
+  difficulty?: Difficulty
+  types?: QuestionType[]
+  script?: QuizScript
+  /** Skip the stored quiz for these settings and make a new one. */
+  regenerate?: boolean
+}
+
+export interface QuizCitation {
+  chunk_id: string | null // null once the source text no longer exists
+  source_id: string | null
+  source_title: string
+  page_start: number | null
+  page_end: number | null
+}
+
+export interface QuizQuestion {
+  type: QuestionType
+  question: string
+  options: string[]
+  correct_index: number | null // mcq and true_false
+  correct_answer: string | null // short_answer
+  explanation: string
+  evidence: string
+  citation: QuizCitation
+}
+
+export interface QuizParams {
+  topic: string | null
+  source_ids: string[]
+  num_questions: number
+  difficulty: Difficulty
+  types: QuestionType[]
+  script: QuizScript
+}
+
+export interface Artifact {
+  id: string
+  session_id: string
+  kind: string
+  status: ArtifactStatus
+  error: string | null
+  params: QuizParams
+  content: { questions: QuizQuestion[] } | null // null until status is "ready"
+  llm_model: string
+  tokens_in: number
+  tokens_out: number
+  created_at: string
+}

@@ -1,5 +1,7 @@
 .sources {
-  height: 100%;
+  /* Shares the column with the Studio panel below it. */
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: 12px;

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useOutletContext, useParams } from 'react-router-dom'
 import { ChatView } from '../chat/ChatView'
+import { QuizStudio } from '../quiz/QuizStudio'
 import { useSessions } from '../sessions/SessionsContext'
 import { SourcesPanel } from '../sources/SourcesPanel'
 import { useSources } from '../sources/useSources'
@@ -41,6 +42,7 @@ export function SessionWorkspace() {
           onRemoved={removeLocal}
           onClose={() => setSourcesOpen(false)}
         />
+        <QuizStudio key={sid} sid={sid} sources={sources} />
       </aside>
     </div>
   )

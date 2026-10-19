@@ -122,3 +122,19 @@ export const MoonIcon = (p: P) => (
     <path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" />
   </Icon>
 )
+export const QuizIcon = (p: P) => (
+  <Icon {...p}>
+    <rect x="4" y="3" width="16" height="18" rx="3" />
+    <path d="M9.5 9.2a2.5 2.5 0 1 1 3.6 2.2c-.7.4-1.1.9-1.1 1.6M12 16.2v.1" />
+  </Icon>
+)
+export const CheckIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </Icon>
+)
+export const ChevronRightIcon = (p: P) => (
+  <Icon {...p}>
+    <path d="M9 6l6 6-6 6" />
+  </Icon>
+)
