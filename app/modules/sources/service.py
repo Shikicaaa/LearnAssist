@@ -369,8 +369,11 @@ def sample_chunks(
     picked = []
 
     for chunks in by_source.values():
-        step = len(chunks) / min(quota, len(chunks))
-        picked += [chunks[int(i * step)] for i in range(min(quota, len(chunks)))]
+        take = min(quota, len(chunks))
+        step = len(chunks) / take
+        # The middle of each of `take` equal segments: the whole source is covered, the end too.
+        # (Starting every segment at its first chunk would never reach the last stretch.)
+        picked += [chunks[int((i + 0.5) * step)] for i in range(take)]
 
     picked_ids = [r.id for r in picked[:limit]]
 

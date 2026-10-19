@@ -54,6 +54,10 @@ class Settings(BaseSettings):
     quiz_min_score: float = 0.55
     quiz_requests_per_hour: int = 5
     quiz_max_per_session: int = 2
+    # A quiz is a long JSON document; chat's 2048 would cut it off in the middle.
+    quiz_max_output_tokens: int = 8192
+    # A "pending" quiz older than this is assumed lost (worker died) and may be requested again.
+    quiz_pending_timeout_minutes: int = 15
 
     rate_limit_auth_requests: int = 10
     rate_limit_auth_window_seconds: int = 60

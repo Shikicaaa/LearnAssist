@@ -30,12 +30,10 @@ def params_hash(
     difficulty: str,
     types: Iterable[str],
     script: str,
-    variant: int,
 ) -> str:
-    """
-    Transforms parameters that define a quiz into a hash that can be used to identify the quiz.
-    This is used to detect if the parameters have changed since the last artifact generation.
-    """
+    """Hash of what the user asked for. The re-roll counter (`variant`) is deliberately not part
+    of it: it lives in its own column of the unique key, so all variants of one request share
+    this hash and "give me another quiz" is just `max(variant) + 1`."""
     payload = {
         "kind": "quiz",
         "topic": (normalize_topic(topic) if topic else "") or None,
@@ -44,7 +42,6 @@ def params_hash(
         "difficulty": difficulty,
         "types": sorted(set(types)),
         "script": script,
-        "variant": variant,
     }
 
     raw = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)

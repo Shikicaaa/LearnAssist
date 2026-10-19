@@ -18,7 +18,7 @@ Format:
    "correct_answer": null, "explanation": "...", "source_rank": 1, "evidence": "..."},
   {"type": "true_false", "question": "...", "options": ["Tačno", "Netačno"], "correct_index": 1,
    "correct_answer": null, "explanation": "...", "source_rank": 2, "evidence": "..."},
-  {"type": "short_answer", "question": "...",ex": null,
-   "correct_answer": "...", "explanation": ".ence": "..."}
+  {"type": "short_answer", "question": "...", "options": [], "correct_index": null,
+   "correct_answer": "...", "explanation": "...", "source_rank": 1, "evidence": "..."}
 ]}
 mcq ima tačno 4 opcije, true_false tačno 2, short_answer nema opcija. "correct_index" je indeks tačne opcije od 0.

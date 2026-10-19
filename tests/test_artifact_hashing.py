@@ -10,7 +10,6 @@ BASE = dict(
     num_questions=10,
     difficulty="hard",
     types=["mcq"],
-    variant=0,
     script="latin",
 )
 
@@ -65,7 +64,6 @@ def test_params_hash_ignores_order_and_duplicates():
         ("difficulty", "medium"),
         ("types", ["tf"]),
         ("script", "cyrillic"),
-        ("variant", 1),
     ],
 )
 def test_each_param_changes_the_hash(field, value):
