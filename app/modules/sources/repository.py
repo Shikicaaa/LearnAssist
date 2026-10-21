@@ -167,3 +167,42 @@ class SourceRepository:
         source.status = SourceStatus.FAILED.value
         source.error = message
         return source
+
+    def list_chunk_refs(self, *, session_id, user_id, embedding_model, source_ids):
+        """Lightweight listing of session's searchable chunks"""
+
+        stmt = (
+            select(Chunk.id, Chunk.source_id, Chunk.chunk_index)
+            .join(Source, Source.id == Chunk.source_id)
+            .where(
+                Chunk.session_id == session_id,
+                Chunk.user_id == user_id,
+                Chunk.embedding_model == embedding_model,
+                Source.status == SourceStatus.READY,
+            )
+            .order_by(Source.created_at, Source.id, Chunk.chunk_index)
+        )
+        if source_ids:
+            stmt = stmt.where(Chunk.source_id.in_(source_ids))
+
+        return self.db.execute(stmt).all()
+
+    def get_chunks_by_ids(self, *, session_id, user_id, chunk_ids):
+        stmt = (
+            select(
+                Chunk.id,
+                Chunk.source_id,
+                Chunk.session_id,
+                Source.title,
+                Chunk.chunk_index,
+                Chunk.page_start,
+                Chunk.page_end,
+                Chunk.text,
+            )
+            .join(Source, Source.id == Chunk.source_id)
+            .where(
+                Chunk.id.in_(chunk_ids), Chunk.user_id == user_id, Chunk.session_id == session_id
+            )
+            .order_by(Source.created_at, Source.id, Chunk.chunk_index)
+        )
+        return self.db.execute(stmt).all()

@@ -39,6 +39,20 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    
+  worker:
+    build: .
+    command: celery -A app.worker worker --loglevel=info --concurrency=1
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://rag_user:${POSTGRES_PASSWORD}@db:5432/rag_db
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/1
+      CELERY_RESULT_BACKEND: redis://redis:6379/2
+    depends_on:
+      db: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
 
 volumes:
   pgdata:

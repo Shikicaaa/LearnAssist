@@ -8,6 +8,7 @@ from app.modules.sources.service import (
     best_score_since,
     collect_files_for_deletion,
     get_chunk,
+    sample_chunks,
     search_chunks,
 )
 
@@ -20,4 +21,5 @@ __all__ = [
     "get_chunk",
     "router",
     "search_chunks",
+    "sample_chunks",
 ]

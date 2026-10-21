@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 
-from app.modules import auth, cache, chat, llm, sessions, sources
+from app.modules import artifacts, auth, cache, chat, llm, sessions, sources
 from app.modules.embeddings import get_embedder
 from app.shared import health
 from app.shared.config import get_settings
@@ -38,3 +38,4 @@ app.include_router(sources.router, prefix="/api/v1")
 app.include_router(llm.router, prefix="/api/v1")
 app.include_router(chat.router, prefix="/api/v1")
 app.include_router(cache.router, prefix="/api/v1")
+app.include_router(artifacts.router, prefix="/api/v1")

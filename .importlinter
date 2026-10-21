@@ -126,3 +126,37 @@ source_modules =
 forbidden_modules =
     app.modules.auth.*
 allow_indirect_imports = True
+
+[importlinter:contract:artifacts-use-public-apis-only]
+name = artifacts does not touch chat, cache or sources, and imports public interfaces only
+type = forbidden
+source_modules =
+    app.modules.artifacts
+forbidden_modules =
+    app.modules.chat
+    app.modules.cache
+    app.modules.sources
+    app.modules.auth.*
+    app.modules.sessions.*
+    app.modules.jobs.*
+    app.modules.embeddings.*
+    app.modules.retrieval.*
+    app.modules.llm.*
+allow_indirect_imports = True
+
+[importlinter:contract:nothing-depends-on-artifacts]
+name = artifacts is a top-level feature: no other module imports it
+type = forbidden
+source_modules =
+    app.modules.auth
+    app.modules.sessions
+    app.modules.jobs
+    app.modules.embeddings
+    app.modules.llm
+    app.modules.sources
+    app.modules.retrieval
+    app.modules.cache
+    app.modules.chat
+forbidden_modules =
+    app.modules.artifacts
+allow_indirect_imports = True

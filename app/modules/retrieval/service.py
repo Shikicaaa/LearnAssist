@@ -86,3 +86,36 @@ def get_chunk(db: Session, *, user_id: uuid.UUID, chunk_id: uuid.UUID) -> ChunkO
         page_end=detail.page_end,
         text=detail.text,
     )
+
+
+def sample_material(
+    db: Session,
+    *,
+    user_id: uuid.UUID,
+    session_id: uuid.UUID,
+    embedding_model: str,
+    source_ids: list[uuid.UUID],
+    limit: int,
+) -> list[RetrievedChunk]:
+    """Returns a sample of chunks from the given sources in the session."""
+    refs = sources.sample_chunks(
+        db,
+        user_id=user_id,
+        session_id=session_id,
+        embedding_model=embedding_model,
+        source_ids=source_ids,
+        limit=limit,
+    )
+
+    return [
+        RetrievedChunk(
+            chunk_id=ref.chunk_id,
+            source_id=ref.source_id,
+            source_title=ref.source_title,
+            page_start=ref.page_start,
+            page_end=ref.page_end,
+            text=ref.text,
+            score=1.0,
+        )
+        for ref in refs
+    ]

@@ -1,6 +1,6 @@
 import { request, openStream, authFetch, ApiError, tokens } from './client'
 import { parseSse } from './sse'
-import type { Chunk, Message, Page, Session, Source, TokenPair, User } from './types'
+import type { Artifact, Chunk, Message, Page, QuizRequest, Session, Source, TokenPair, User } from './types'
 
 // ---- auth ------------------------------------------------------------------------------
 
@@ -71,4 +71,18 @@ export const chatApi = {
       }),
     ),
   chunk: (id: string) => request<Chunk>(`/chunks/${id}`),
+}
+
+// ---- quizzes ---------------------------------------------------------------------------
+
+export const quizApi = {
+  /**
+   * Starts a quiz (or returns the stored one for the same settings). The answer is `pending`
+   * while a worker is busy, so poll `get` until the status changes.
+   */
+  create: (sid: string, body: QuizRequest) => request<Artifact>(`/sessions/${sid}/quizzes`, { json: body }),
+  /** Newest first. */
+  list: (sid: string) => request<Page<Artifact>>(`/sessions/${sid}/artifacts?limit=50`),
+  get: (id: string) => request<Artifact>(`/artifacts/${id}`),
+  remove: (id: string) => request(`/artifacts/${id}`, { method: 'DELETE' }),
 }
